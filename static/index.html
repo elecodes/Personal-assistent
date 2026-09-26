@@ -61,7 +61,7 @@
       padding: 0.85rem;
       margin-bottom: 1rem;
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-      transition: box-shadow 0.2s;
+      transition: box-shadow 0.2s, opacity 0.2s;
       overflow: hidden;
     }
     .task-card:hover {
@@ -70,7 +70,7 @@
     .task-card.card-completed {
       background: #f1f5f9;
       border-color: #cbd5e1;
-      opacity: 0.75;
+      opacity: 0.7;
     }
     .card-top-bar {
       display: flex;
@@ -188,7 +188,7 @@
       <h4 class="fw-bold m-0"><i class="bi bi-calendar3 text-primary"></i> Tablero de Calendario</h4>
       <div class="d-flex gap-2">
         <button id="toggleCompletedBtn" class="btn btn-sm btn-outline-secondary" onclick="toggleShowCompleted()">
-          <i class="bi bi-check-all"></i> Mostrar Completadas (<span id="count-completed">0</span>)
+          <i class="bi bi-check-all"></i> Ver Completadas (<span id="count-completed">0</span>)
         </button>
         <button class="btn btn-sm btn-outline-secondary" onclick="clearBoard()"><i class="bi bi-trash"></i> Limpiar Tablero</button>
       </div>
@@ -365,9 +365,16 @@
       renderBoard();
     }
 
-    function toggleTaskCompletion(idx) {
-      tasksList[idx].completed = !tasksList[idx].completed;
-      renderBoard();
+    function findTaskById(id) {
+      return tasksList.find(t => t.id === id);
+    }
+
+    function toggleTaskCompletion(id) {
+      const task = findTaskById(id);
+      if (task) {
+        task.completed = !task.completed;
+        renderBoard();
+      }
     }
 
     function renderBoard() {
@@ -384,9 +391,10 @@
       tomorrow.setDate(tomorrow.getDate() + 1);
       const tomorrowStr = tomorrow.toISOString().slice(0, 10);
 
-      tasksList.forEach((task, idx) => {
+      tasksList.forEach((task) => {
         if (task.completed) cCompleted++;
 
+        // Skip completed tasks if showCompleted is false
         if (task.completed && !showCompleted) return;
 
         let targetContainer = 'container-sinfecha';
@@ -407,7 +415,7 @@
           if (!task.completed) cSinFecha++;
         }
 
-        const cardElement = createEditableCardHTML(task, idx);
+        const cardElement = createEditableCardHTML(task);
         document.getElementById(targetContainer).appendChild(cardElement);
       });
 
@@ -418,7 +426,7 @@
       document.getElementById('count-completed').innerText = cCompleted;
     }
 
-    function createEditableCardHTML(task, idx) {
+    function createEditableCardHTML(task) {
       const card = document.createElement('div');
       card.className = `task-card ${task.completed ? 'card-completed' : ''}`;
 
@@ -429,8 +437,8 @@
           <input type="checkbox" class="form-check-input">
           <input type="text" class="form-control form-control-sm step-input-field flex-grow-1" 
                  value="${step}" placeholder="Escribí un paso..."
-                 oninput="updateStep(${idx}, ${sIdx}, this.value)">
-          <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1" onclick="removeStep(${idx}, ${sIdx})">
+                 oninput="updateStep('${task.id}', ${sIdx}, this.value)">
+          <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1" onclick="removeStep('${task.id}', ${sIdx})">
             <i class="bi bi-x-circle"></i>
           </button>
         </div>
@@ -443,13 +451,13 @@
           <div class="date-picker-wrapper" title="Seleccionar fecha y hora">
             <i class="bi bi-calendar-event text-primary small"></i>
             <input type="datetime-local" class="date-picker-input" value="${dtValue}"
-                   onchange="updateField(${idx}, 'date_time', this.value)">
+                   onchange="updateField('${task.id}', 'date_time', this.value)">
           </div>
 
           <!-- TOP RIGHT: Category & Priority -->
           <div class="d-flex gap-1">
             <select class="form-select card-select-custom text-primary" 
-                    onchange="updateField(${idx}, 'category', this.value)">
+                    onchange="updateField('${task.id}', 'category', this.value)">
               <option value="Trabajo" ${task.category === 'Trabajo' ? 'selected' : ''}>Trabajo</option>
               <option value="Personal" ${task.category === 'Personal' ? 'selected' : ''}>Personal</option>
               <option value="Ideas" ${task.category === 'Ideas' ? 'selected' : ''}>Ideas</option>
@@ -457,7 +465,7 @@
             </select>
 
             <select class="form-select card-select-custom text-dark" 
-                    onchange="updateField(${idx}, 'priority', this.value)">
+                    onchange="updateField('${task.id}', 'priority', this.value)">
               <option value="Alta" ${task.priority === 'Alta' ? 'selected' : ''}>Alta</option>
               <option value="Media" ${task.priority === 'Media' ? 'selected' : ''}>Media</option>
               <option value="Baja" ${task.priority === 'Baja' ? 'selected' : ''}>Baja</option>
@@ -468,18 +476,18 @@
         <!-- Large Note Body Space -->
         <div class="mb-3">
           <textarea class="card-note-textarea ${task.completed ? 'text-decoration-line-through text-muted' : ''}" placeholder="Escribí o dictá el texto completo de tu nota aquí..."
-                    oninput="updateField(${idx}, 'title', this.value)">${task.title}</textarea>
+                    oninput="updateField('${task.id}', 'title', this.value)">${task.title}</textarea>
         </div>
         
         <!-- Checklist Steps -->
         <div class="checklist-container mb-3">
           <div class="d-flex justify-content-between align-items-center mb-1">
             <small class="fw-bold text-secondary" style="font-size: 0.78rem;"><i class="bi bi-list-check"></i> Lista de Comprobación</small>
-            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;" onclick="addStepToCard(${idx})">
+            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;" onclick="addStepToCard('${task.id}')">
               + Agregar Paso
             </button>
           </div>
-          <div id="steps-list-${idx}">
+          <div id="steps-list-${task.id}">
             ${stepsHtml}
           </div>
         </div>
@@ -487,23 +495,23 @@
         <!-- Bottom Actions -->
         <div class="d-flex gap-1 justify-content-between align-items-center pt-2 border-top">
           <div class="d-flex gap-2 align-items-center">
-            <button class="btn btn-sm ${task.completed ? 'btn-success' : 'btn-outline-success'} py-0 px-2" style="font-size: 0.78rem;" onclick="toggleTaskCompletion(${idx})" title="Marcar como completada">
+            <button class="btn btn-sm ${task.completed ? 'btn-success' : 'btn-outline-success'} py-0 px-2" style="font-size: 0.78rem;" onclick="toggleTaskCompletion('${task.id}')" title="Marcar como completada">
               <i class="bi ${task.completed ? 'bi-check-circle-fill' : 'bi-check-circle'}"></i> ${task.completed ? 'Completada' : 'Completar'}
             </button>
-            <button class="btn btn-sm btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="deleteTask(${idx})">
+            <button class="btn btn-sm btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="deleteTask('${task.id}')">
               <i class="bi bi-trash"></i>
             </button>
           </div>
           <div class="d-flex gap-1 flex-wrap">
-            <button class="btn btn-sm btn-outline-dark py-0 px-2" style="font-size: 0.75rem;" onclick="syncObsidian(${idx})" title="Guardar nota en Obsidian">
+            <button class="btn btn-sm btn-outline-dark py-0 px-2" style="font-size: 0.75rem;" onclick="syncObsidian('${task.id}')" title="Guardar nota en Obsidian">
               <i class="bi bi-journal-markdown"></i> Obsidian
             </button>
             ${task.date_time ? `
-              <button class="btn btn-sm btn-outline-success py-0 px-2" style="font-size: 0.75rem;" onclick="syncGCal(${idx})" title="Agendar en Google Calendar">
+              <button class="btn btn-sm btn-outline-success py-0 px-2" style="font-size: 0.75rem;" onclick="syncGCal('${task.id}')" title="Agendar en Google Calendar">
                 <i class="bi bi-calendar-plus"></i> GCal
               </button>
             ` : ''}
-            <button class="btn btn-sm btn-primary py-0 px-2" style="font-size: 0.75rem;" onclick="syncNotion(${idx})" title="Sincronizar a Notion">
+            <button class="btn btn-sm btn-primary py-0 px-2" style="font-size: 0.75rem;" onclick="syncNotion('${task.id}')" title="Sincronizar a Notion">
               <i class="bi bi-cloud-upload"></i> Notion
             </button>
           </div>
@@ -513,41 +521,57 @@
       return card;
     }
 
-    function updateField(idx, field, value) {
-      tasksList[idx][field] = value || null;
-      if (field === 'date_time') renderBoard();
+    function updateField(id, field, value) {
+      const task = findTaskById(id);
+      if (task) {
+        task[field] = value || null;
+        if (field === 'date_time') renderBoard();
+      }
     }
 
-    function updateStep(taskIdx, stepIdx, value) {
-      tasksList[taskIdx].steps[stepIdx] = value;
+    function updateStep(id, stepIdx, value) {
+      const task = findTaskById(id);
+      if (task && task.steps[stepIdx] !== undefined) {
+        task.steps[stepIdx] = value;
+      }
     }
 
-    function removeStep(taskIdx, stepIdx) {
-      tasksList[taskIdx].steps.splice(stepIdx, 1);
-      renderBoard();
+    function removeStep(id, stepIdx) {
+      const task = findTaskById(id);
+      if (task) {
+        task.steps.splice(stepIdx, 1);
+        renderBoard();
+      }
     }
 
-    function addStepToCard(taskIdx) {
-      tasksList[taskIdx].steps.push('');
-      renderBoard();
-      setTimeout(() => {
-        const stepsContainer = document.getElementById(`steps-list-${taskIdx}`);
-        if (stepsContainer) {
-          const inputs = stepsContainer.querySelectorAll('.step-input-field');
-          if (inputs.length > 0) {
-            inputs[inputs.length - 1].focus();
+    function addStepToCard(id) {
+      const task = findTaskById(id);
+      if (task) {
+        task.steps.push('');
+        renderBoard();
+        setTimeout(() => {
+          const stepsContainer = document.getElementById(`steps-list-${id}`);
+          if (stepsContainer) {
+            const inputs = stepsContainer.querySelectorAll('.step-input-field');
+            if (inputs.length > 0) {
+              inputs[inputs.length - 1].focus();
+            }
           }
-        }
-      }, 50);
+        }, 50);
+      }
     }
 
-    function deleteTask(idx) {
-      tasksList.splice(idx, 1);
-      renderBoard();
+    function deleteTask(id) {
+      const idx = tasksList.findIndex(t => t.id === id);
+      if (idx >= 0) {
+        tasksList.splice(idx, 1);
+        renderBoard();
+      }
     }
 
-    async function syncNotion(idx) {
-      const task = tasksList[idx];
+    async function syncNotion(id) {
+      const task = findTaskById(id);
+      if (!task) return;
       try {
         const res = await fetch('/api/tasks', {
           method: 'POST',
@@ -560,8 +584,9 @@
       } catch (e) { alert('Error: ' + e.message); }
     }
 
-    async function syncObsidian(idx) {
-      const task = tasksList[idx];
+    async function syncObsidian(id) {
+      const task = findTaskById(id);
+      if (!task) return;
       try {
         const res = await fetch('/api/obsidian', {
           method: 'POST',
@@ -571,17 +596,17 @@
         const data = await res.json();
         if (data.success) {
           if (data.saved_to_disk) {
-            alert('✅ Nota guardada directamente en tu carpeta de Obsidian:\n' + data.saved_file_path);
+            alert('✅ Nota guardada en segundo plano en tu carpeta de Obsidian:\n' + data.saved_file_path);
           } else if (data.obsidian_uri) {
-            // Trigger Obsidian protocol to ensure creation inside target vault/subfolder
             window.location.href = data.obsidian_uri;
           }
         }
       } catch (e) { alert('Error exportando a Obsidian: ' + e.message); }
     }
 
-    async function syncGCal(idx) {
-      const task = tasksList[idx];
+    async function syncGCal(id) {
+      const task = findTaskById(id);
+      if (!task) return;
       try {
         const res = await fetch('/api/calendar-link', {
           method: 'POST',
