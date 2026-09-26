@@ -13,7 +13,7 @@ from urllib.parse import quote
 from datetime import datetime, timedelta
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -45,6 +45,12 @@ class TaskPayload(BaseModel):
     priority: str
     date_time: str | None = None
     steps: list[str] = []
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """Return a 204 No Content for favicon requests to prevent 404 console warnings."""
+    return Response(status_code=204)
 
 
 @app.post("/api/parse")
