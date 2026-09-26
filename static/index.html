@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organizador Visual por Voz & Calendario</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <style>
+    body {
+      background-color: #f8fafc;
+      font-family: system-ui, -apple-system, sans-serif;
+      color: #0f172a;
+    }
+    .hero-header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: white;
+      padding: 1.5rem 0;
+      border-bottom: 3px solid #3b82f6;
+    }
+    .mic-btn {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      font-size: 1.8rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+    }
+    .mic-btn.recording {
+      animation: pulse 1.5s infinite;
+      background-color: #ef4444 !important;
+      border-color: #ef4444 !important;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+    .board-column {
+      background: #f1f5f9;
+      border-radius: 12px;
+      padding: 0.8rem;
+      min-height: 500px;
+      border: 1px solid #e2e8f0;
+    }
+    .board-column-header {
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin-bottom: 0.8rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #cbd5e1;
+    }
+    .task-card {
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      background: white;
+      padding: 0.85rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      transition: box-shadow 0.2s;
+      overflow: hidden;
+    }
+    .task-card:hover {
+      box-shadow: 0 8px 14px -2px rgba(0,0,0,0.08);
+    }
+    .card-top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 0.75rem;
+      width: 100%;
+    }
+    .date-picker-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      max-width: 100%;
+    }
+    .date-picker-input {
+      font-size: 0.75rem;
+      border: none;
+      background: transparent;
+      color: #334155;
+      font-weight: 500;
+      outline: none;
+      width: 130px;
+    }
+    .card-select-custom {
+      font-size: 0.74rem !important;
+      font-weight: 600;
+      padding: 2px 18px 2px 6px !important;
+      border-radius: 6px !important;
+      border: 1px solid #cbd5e1 !important;
+      background-color: #f8fafc !important;
+      max-width: 105px !important;
+      text-overflow: ellipsis;
+    }
+    .card-note-textarea {
+      width: 100%;
+      font-size: 0.92rem;
+      line-height: 1.45;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background-color: #ffffff;
+      padding: 8px 10px;
+      min-height: 90px;
+      resize: vertical;
+    }
+    .card-note-textarea:focus {
+      border-color: #3b82f6;
+      background-color: #f8fafc;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+      outline: none;
+    }
+    .checklist-container {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 0.5rem;
+    }
+    .step-input-field {
+      font-size: 0.85rem;
+      border: 1px solid #cbd5e1 !important;
+      background: #ffffff !important;
+      border-radius: 4px;
+      padding: 2px 6px;
+    }
+    .step-input-field:focus {
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero-header text-center mb-4">
+    <div class="container">
+      <h3 class="fw-bold m-0"><i class="bi bi-mic-fill text-primary"></i> Organizador Visual por Voz</h3>
+      <p class="text-light small mt-1 mb-0">Dictá tu nota -> Visualizá la tarjeta -> Sincronizá con Notion, Obsidian y Calendario</p>
+    </div>
+  </header>
+
+  <main class="container-fluid px-3">
+    <!-- Dictation Control -->
+    <div class="row justify-content-center mb-4">
+      <div class="col-md-9">
+        <div class="card p-3 shadow-sm border-0">
+          <div class="d-flex align-items-center gap-3">
+            <button id="micBtn" class="btn btn-primary mic-btn flex-shrink-0" onclick="toggleDictation()">
+              <i class="bi bi-mic"></i>
+            </button>
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span id="micStatus" class="fw-semibold text-muted small">Haz clic en el micrófono para dictar...</span>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-sm btn-outline-danger py-0" onclick="resetTranscript()"><i class="bi bi-x-circle"></i> Borrar Dictado</button>
+                  <button class="btn btn-sm btn-success py-0" onclick="commitCurrentDraft()"><i class="bi bi-plus-circle"></i> Crear Tarjeta</button>
+                </div>
+              </div>
+              <div id="transcriptText" class="fst-italic text-dark p-2 bg-light rounded" style="min-height: 48px; max-height: 100px; overflow-y: auto;">
+                Dictá por ejemplo: "Trabajo: preparar informe trimestral urgente para el viernes a las 10 am, pasos: juntar datos y escribir resumen"
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendar Dashboard -->
+    <div class="d-flex justify-content-between align-items-center mb-3 px-2">
+      <h4 class="fw-bold m-0"><i class="bi bi-calendar3 text-primary"></i> Tablero de Calendario</h4>
+      <button class="btn btn-sm btn-outline-secondary" onclick="clearBoard()"><i class="bi bi-trash"></i> Limpiar Tablero</button>
+    </div>
+
+    <div class="row g-3">
+      <!-- Hoy Column -->
+      <div class="col-md-3">
+        <div class="board-column" id="col-hoy">
+          <div class="board-column-header text-primary">
+            <span><i class="bi bi-calendar-event"></i> Hoy</span>
+            <span class="badge bg-primary rounded-pill" id="count-hoy">0</span>
+          </div>
+          <div class="cards-container" id="container-hoy"></div>
+        </div>
+      </div>
+
+      <!-- Mañana Column -->
+      <div class="col-md-3">
+        <div class="board-column" id="col-manana">
+          <div class="board-column-header text-info">
+            <span><i class="bi bi-calendar-plus"></i> Mañana</span>
+            <span class="badge bg-info rounded-pill" id="count-manana">0</span>
+          </div>
+          <div class="cards-container" id="container-manana"></div>
+        </div>
+      </div>
+
+      <!-- Próximos Días Column -->
+      <div class="col-md-3">
+        <div class="board-column" id="col-proximos">
+          <div class="board-column-header text-warning">
+            <span><i class="bi bi-calendar-week"></i> Próximos Días</span>
+            <span class="badge bg-warning text-dark rounded-pill" id="count-proximos">0</span>
+          </div>
+          <div class="cards-container" id="container-proximos"></div>
+        </div>
+      </div>
+
+      <!-- Sin Fecha Column -->
+      <div class="col-md-3">
+        <div class="board-column" id="col-sinfecha">
+          <div class="board-column-header text-secondary">
+            <span><i class="bi bi-journal-text"></i> Sin Fecha / Backlog</span>
+            <span class="badge bg-secondary rounded-pill" id="count-sinfecha">0</span>
+          </div>
+          <div class="cards-container" id="container-sinfecha"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let recognition;
+    let isRecording = false;
+    let finalTranscript = '';
+    let tasksList = [];
+    let activeDraftId = null;
+
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'es-ES';
+
+      recognition.onresult = (event) => {
+        let interimTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i];
+          if (result.isFinal) finalTranscript += result[0].transcript + ' ';
+          else interimTranscript += result[0].transcript;
+        }
+        
+        const fullText = finalTranscript + interimTranscript;
+        document.getElementById('transcriptText').innerText = fullText || 'Escuchando...';
+        parseAndPreviewDraft(fullText);
+      };
+
+      recognition.onerror = (event) => {
+        if (event.error === 'no-speech' && isRecording) return;
+        console.warn('Speech error:', event.error);
+      };
+
+      recognition.onend = () => {
+        if (isRecording) {
+          try { recognition.start(); } catch (e) {}
+        }
+      };
+    }
+
+    function toggleDictation() {
+      if (isRecording) stopDictation();
+      else startDictation();
+    }
+
+    function startDictation() {
+      isRecording = true;
+      document.getElementById('micBtn').classList.add('recording');
+      document.getElementById('micStatus').innerText = '🔴 Grabando... Hablá ahora.';
+      if (!activeDraftId) activeDraftId = 'task-' + Date.now();
+      if (recognition) {
+        try { recognition.start(); } catch (e) {}
+      }
+    }
+
+    function stopDictation() {
+      isRecording = false;
+      document.getElementById('micBtn').classList.remove('recording');
+      document.getElementById('micStatus').innerText = '⏸️ Grabación pausada.';
+      if (recognition) recognition.stop();
+    }
+
+    function resetTranscript() {
+      finalTranscript = '';
+      activeDraftId = null;
+      document.getElementById('transcriptText').innerText = 'Dictado borrado.';
+    }
+
+    let debounceTimer;
+    function parseAndPreviewDraft(transcript) {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(async () => {
+        if (!transcript.trim()) return;
+        try {
+          const res = await fetch('/api/parse', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ transcript })
+          });
+          const data = await res.json();
+          if (data.success && data.task) {
+            updateOrCreateDraftTask(data.task);
+          }
+        } catch (e) { console.error(e); }
+      }, 500);
+    }
+
+    function updateOrCreateDraftTask(parsedTask) {
+      if (!activeDraftId) activeDraftId = 'task-' + Date.now();
+      
+      const idx = tasksList.findIndex(t => t.id === activeDraftId);
+      const taskObj = {
+        id: activeDraftId,
+        title: parsedTask.title || 'Nueva Idea',
+        category: parsedTask.category || 'Ideas',
+        priority: parsedTask.priority || 'Media',
+        date_time: parsedTask.date_time || null,
+        steps: parsedTask.steps || []
+      };
+
+      if (idx >= 0) {
+        tasksList[idx] = taskObj;
+      } else {
+        tasksList.push(taskObj);
+      }
+      renderBoard();
+    }
+
+    function commitCurrentDraft() {
+      activeDraftId = null;
+      finalTranscript = '';
+      document.getElementById('transcriptText').innerText = 'Tarjeta creada. Presioná el micrófono para la siguiente.';
+      stopDictation();
+    }
+
+    function renderBoard() {
+      document.getElementById('container-hoy').innerHTML = '';
+      document.getElementById('container-manana').innerHTML = '';
+      document.getElementById('container-proximos').innerHTML = '';
+      document.getElementById('container-sinfecha').innerHTML = '';
+
+      let cHoy = 0, cManana = 0, cProximos = 0, cSinFecha = 0;
+
+      const now = new Date();
+      const todayStr = now.toISOString().slice(0, 10);
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+
+      tasksList.forEach((task, idx) => {
+        let targetContainer = 'container-sinfecha';
+
+        if (task.date_time) {
+          const datePart = task.date_time.slice(0, 10);
+          if (datePart === todayStr) {
+            targetContainer = 'container-hoy';
+            cHoy++;
+          } else if (datePart === tomorrowStr) {
+            targetContainer = 'container-manana';
+            cManana++;
+          } else {
+            targetContainer = 'container-proximos';
+            cProximos++;
+          }
+        } else {
+          cSinFecha++;
+        }
+
+        const cardElement = createEditableCardHTML(task, idx);
+        document.getElementById(targetContainer).appendChild(cardElement);
+      });
+
+      document.getElementById('count-hoy').innerText = cHoy;
+      document.getElementById('count-manana').innerText = cManana;
+      document.getElementById('count-proximos').innerText = cProximos;
+      document.getElementById('count-sinfecha').innerText = cSinFecha;
+    }
+
+    function createEditableCardHTML(task, idx) {
+      const card = document.createElement('div');
+      card.className = 'task-card';
+
+      const dtValue = task.date_time ? task.date_time.slice(0, 16) : '';
+
+      const stepsHtml = (task.steps || []).map((step, sIdx) => `
+        <div class="d-flex align-items-center gap-1 mb-1">
+          <input type="checkbox" class="form-check-input">
+          <input type="text" class="form-control form-control-sm step-input-field flex-grow-1" 
+                 value="${step}" placeholder="Escribí un paso..."
+                 oninput="updateStep(${idx}, ${sIdx}, this.value)">
+          <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1" onclick="removeStep(${idx}, ${sIdx})">
+            <i class="bi bi-x-circle"></i>
+          </button>
+        </div>
+      `).join('');
+
+      card.innerHTML = `
+        <!-- Top Bar -->
+        <div class="card-top-bar">
+          <!-- TOP LEFT: Date picker inside card -->
+          <div class="date-picker-wrapper" title="Seleccionar fecha y hora">
+            <i class="bi bi-calendar-event text-primary small"></i>
+            <input type="datetime-local" class="date-picker-input" value="${dtValue}"
+                   onchange="updateField(${idx}, 'date_time', this.value)">
+          </div>
+
+          <!-- TOP RIGHT: Category & Priority -->
+          <div class="d-flex gap-1">
+            <select class="form-select card-select-custom text-primary" 
+                    onchange="updateField(${idx}, 'category', this.value)">
+              <option value="Trabajo" ${task.category === 'Trabajo' ? 'selected' : ''}>Trabajo</option>
+              <option value="Personal" ${task.category === 'Personal' ? 'selected' : ''}>Personal</option>
+              <option value="Ideas" ${task.category === 'Ideas' ? 'selected' : ''}>Ideas</option>
+              <option value="Proyectos" ${task.category === 'Proyectos' ? 'selected' : ''}>Proyectos</option>
+            </select>
+
+            <select class="form-select card-select-custom text-dark" 
+                    onchange="updateField(${idx}, 'priority', this.value)">
+              <option value="Alta" ${task.priority === 'Alta' ? 'selected' : ''}>Alta</option>
+              <option value="Media" ${task.priority === 'Media' ? 'selected' : ''}>Media</option>
+              <option value="Baja" ${task.priority === 'Baja' ? 'selected' : ''}>Baja</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Large Note Body Space -->
+        <div class="mb-3">
+          <textarea class="card-note-textarea" placeholder="Escribí o dictá el texto completo de tu nota aquí..."
+                    oninput="updateField(${idx}, 'title', this.value)">${task.title}</textarea>
+        </div>
+        
+        <!-- Checklist Steps -->
+        <div class="checklist-container mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <small class="fw-bold text-secondary" style="font-size: 0.78rem;"><i class="bi bi-list-check"></i> Lista de Comprobación</small>
+            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;" onclick="addStepToCard(${idx})">
+              + Agregar Paso
+            </button>
+          </div>
+          <div id="steps-list-${idx}">
+            ${stepsHtml}
+          </div>
+        </div>
+
+        <!-- Bottom Actions -->
+        <div class="d-flex gap-1 justify-content-between align-items-center pt-2 border-top">
+          <button class="btn btn-sm btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="deleteTask(${idx})">
+            <i class="bi bi-trash"></i> Eliminar
+          </button>
+          <div class="d-flex gap-1 flex-wrap">
+            <button class="btn btn-sm btn-outline-dark py-0 px-2" style="font-size: 0.75rem;" onclick="syncObsidian(${idx})" title="Abrir y crear nota en Obsidian">
+              <i class="bi bi-journal-markdown"></i> Obsidian
+            </button>
+            ${task.date_time ? `
+              <button class="btn btn-sm btn-outline-success py-0 px-2" style="font-size: 0.75rem;" onclick="syncGCal(${idx})" title="Agendar en Google Calendar">
+                <i class="bi bi-calendar-plus"></i> GCal
+              </button>
+            ` : ''}
+            <button class="btn btn-sm btn-primary py-0 px-2" style="font-size: 0.75rem;" onclick="syncNotion(${idx})" title="Sincronizar a Notion">
+              <i class="bi bi-cloud-upload"></i> Notion
+            </button>
+          </div>
+        </div>
+      `;
+
+      return card;
+    }
+
+    function updateField(idx, field, value) {
+      tasksList[idx][field] = value || null;
+      if (field === 'date_time') renderBoard();
+    }
+
+    function updateStep(taskIdx, stepIdx, value) {
+      tasksList[taskIdx].steps[stepIdx] = value;
+    }
+
+    function removeStep(taskIdx, stepIdx) {
+      tasksList[taskIdx].steps.splice(stepIdx, 1);
+      renderBoard();
+    }
+
+    function addStepToCard(taskIdx) {
+      tasksList[taskIdx].steps.push('');
+      renderBoard();
+      setTimeout(() => {
+        const stepsContainer = document.getElementById(`steps-list-${taskIdx}`);
+        if (stepsContainer) {
+          const inputs = stepsContainer.querySelectorAll('.step-input-field');
+          if (inputs.length > 0) {
+            inputs[inputs.length - 1].focus();
+          }
+        }
+      }, 50);
+    }
+
+    function deleteTask(idx) {
+      tasksList.splice(idx, 1);
+      renderBoard();
+    }
+
+    async function syncNotion(idx) {
+      const task = tasksList[idx];
+      try {
+        const res = await fetch('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(task)
+        });
+        const data = await res.json();
+        if (data.success) alert('¡Tarjeta sincronizada a Notion!');
+        else alert('Error: ' + data.detail);
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    async function syncObsidian(idx) {
+      const task = tasksList[idx];
+      try {
+        const res = await fetch('/api/obsidian', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(task)
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (data.saved_to_disk) {
+            alert('¡Nota guardada directo en tu carpeta de Obsidian!\n' + data.saved_file_path);
+          }
+          if (data.obsidian_uri) {
+            // Trigger native Obsidian URL protocol to immediately open/create inside Obsidian
+            window.location.href = data.obsidian_uri;
+          }
+        }
+      } catch (e) { alert('Error exportando a Obsidian: ' + e.message); }
+    }
+
+    async function syncGCal(idx) {
+      const task = tasksList[idx];
+      try {
+        const res = await fetch('/api/calendar-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(task)
+        });
+        const data = await res.json();
+        if (data.google_calendar_url) window.open(data.google_calendar_url, '_blank');
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    function clearBoard() {
+      tasksList = [];
+      activeDraftId = null;
+      finalTranscript = '';
+      document.getElementById('transcriptText').innerText = 'Tablero limpiado.';
+      renderBoard();
+    }
+  </script>
+</body>
+</html>
