@@ -571,9 +571,10 @@
         const data = await res.json();
         if (data.success) {
           if (data.saved_to_disk) {
-            alert('✅ Nota guardada en segundo plano en tu carpeta de Obsidian:\n' + data.saved_file_path);
-          } else {
-            alert('✅ Nota enviada a tu carpeta Substack en Obsidian.');
+            alert('✅ Nota guardada directamente en tu carpeta de Obsidian:\n' + data.saved_file_path);
+          } else if (data.obsidian_uri) {
+            // Trigger Obsidian protocol to ensure creation inside target vault/subfolder
+            window.location.href = data.obsidian_uri;
           }
         }
       } catch (e) { alert('Error exportando a Obsidian: ' + e.message); }
