@@ -10,6 +10,7 @@ Organizador visual de tareas por dictado de voz (100% Free Tier) que convierte n
 ## Características Principales
 
 * 🎙️ **Dictado Continuo por Voz**: Transcripción en tiempo real en español utilizando la Web Speech API nativa (sin consumo de cuotas ni APIs de pago) con bucle de reconexión continua.
+* 🔊 **Text-to-Speech (TTS) Lectura por Voz**: Escuchá el resumen hablado de tus notas por columna diaria (*Hoy*, *Mañana*, *Próximos Días*, *Sin Fecha*) o por nota individual mediante `window.speechSynthesis` nativo ($0 cost).
 * 🧠 **Parser Inteligente de Lenguaje Natural**: Extrae automáticamente el título, categoría (`Trabajo`, `Personal`, `Ideas`, `Proyectos`), prioridad (`Alta`, `Media`, `Baja`), fecha/hora y pasos de comprobación.
 * 📅 **Tablero Visual por Días**: Organización automática de tarjetas en columnas dinámicas (*Hoy*, *Mañana*, *Próximos Días*, *Sin Fecha / Backlog*).
 * ✏️ **Tarjetas 100% Editables**: Modificación in-situ de títulos, categorías, prioridades, fechas y listas de chequeo con foco automático al agregar pasos.

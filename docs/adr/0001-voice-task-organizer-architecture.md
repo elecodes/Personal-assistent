@@ -26,10 +26,10 @@ Chosen option: **Option 2 (FastAPI + Web Speech API Frontend)** because it deliv
 
 ### Positive Consequences
 
-* $0 operational cost across voice recognition, Notion API, Obsidian Markdown export, and Google Calendar links.
-* Responsive, zero-latency visual board with inline editable cards, checklists, and calendar date pickers.
+* $0 operational cost across voice recognition, Text-to-Speech (TTS) daily playback, Notion API, Obsidian Markdown export, and Google Calendar links.
+* Responsive, zero-latency visual board with inline editable cards, checklists, calendar date pickers, and daily column audio summaries.
 * 100% silent background Markdown note writing into `obsidian_vault/Substack` with fallback to official `obsidian://new?vault=...&file=...&content=...` URI routing.
 
-### Negative Consequences
+### Negative Consequences & Future Considerations
 
-* Web Speech API capabilities depend on modern browser engines (Chrome, Edge, Safari).
+* Web Speech API & SpeechSynthesis capabilities depend on browser voice engines (robotic default voice in some OS/browsers). Evaluation of external free-tier/low-cost TTS alternatives (e.g. Amazon Polly) pending for future enhancement.
