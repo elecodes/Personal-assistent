@@ -67,6 +67,11 @@
     .task-card:hover {
       box-shadow: 0 8px 14px -2px rgba(0,0,0,0.08);
     }
+    .task-card.card-completed {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      opacity: 0.75;
+    }
     .card-top-bar {
       display: flex;
       flex-wrap: wrap;
@@ -177,10 +182,15 @@
       </div>
     </div>
 
-    <!-- Calendar Dashboard -->
+    <!-- Calendar Dashboard Control Header -->
     <div class="d-flex justify-content-between align-items-center mb-3 px-2">
       <h4 class="fw-bold m-0"><i class="bi bi-calendar3 text-primary"></i> Tablero de Calendario</h4>
-      <button class="btn btn-sm btn-outline-secondary" onclick="clearBoard()"><i class="bi bi-trash"></i> Limpiar Tablero</button>
+      <div class="d-flex gap-2">
+        <button id="toggleCompletedBtn" class="btn btn-sm btn-outline-secondary" onclick="toggleShowCompleted()">
+          <i class="bi bi-check-all"></i> Mostrar Completadas (<span id="count-completed">0</span>)
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="clearBoard()"><i class="bi bi-trash"></i> Limpiar Tablero</button>
+      </div>
     </div>
 
     <div class="row g-3">
@@ -236,6 +246,7 @@
     let finalTranscript = '';
     let tasksList = [];
     let activeDraftId = null;
+    let showCompleted = false;
 
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -326,11 +337,12 @@
         category: parsedTask.category || 'Ideas',
         priority: parsedTask.priority || 'Media',
         date_time: parsedTask.date_time || null,
-        steps: parsedTask.steps || []
+        steps: parsedTask.steps || [],
+        completed: false
       };
 
       if (idx >= 0) {
-        tasksList[idx] = taskObj;
+        tasksList[idx] = { ...tasksList[idx], ...taskObj };
       } else {
         tasksList.push(taskObj);
       }
@@ -344,13 +356,26 @@
       stopDictation();
     }
 
+    function toggleShowCompleted() {
+      showCompleted = !showCompleted;
+      const btn = document.getElementById('toggleCompletedBtn');
+      btn.classList.toggle('btn-secondary', showCompleted);
+      btn.classList.toggle('btn-outline-secondary', !showCompleted);
+      renderBoard();
+    }
+
+    function toggleTaskCompletion(idx) {
+      tasksList[idx].completed = !tasksList[idx].completed;
+      renderBoard();
+    }
+
     function renderBoard() {
       document.getElementById('container-hoy').innerHTML = '';
       document.getElementById('container-manana').innerHTML = '';
       document.getElementById('container-proximos').innerHTML = '';
       document.getElementById('container-sinfecha').innerHTML = '';
 
-      let cHoy = 0, cManana = 0, cProximos = 0, cSinFecha = 0;
+      let cHoy = 0, cManana = 0, cProximos = 0, cSinFecha = 0, cCompleted = 0;
 
       const now = new Date();
       const todayStr = now.toISOString().slice(0, 10);
@@ -359,22 +384,27 @@
       const tomorrowStr = tomorrow.toISOString().slice(0, 10);
 
       tasksList.forEach((task, idx) => {
+        if (task.completed) cCompleted++;
+
+        // If card is completed and we're not showing completed cards, skip rendering it
+        if (task.completed && !showCompleted) return;
+
         let targetContainer = 'container-sinfecha';
 
         if (task.date_time) {
           const datePart = task.date_time.slice(0, 10);
           if (datePart === todayStr) {
             targetContainer = 'container-hoy';
-            cHoy++;
+            if (!task.completed) cHoy++;
           } else if (datePart === tomorrowStr) {
             targetContainer = 'container-manana';
-            cManana++;
+            if (!task.completed) cManana++;
           } else {
             targetContainer = 'container-proximos';
-            cProximos++;
+            if (!task.completed) cProximos++;
           }
         } else {
-          cSinFecha++;
+          if (!task.completed) cSinFecha++;
         }
 
         const cardElement = createEditableCardHTML(task, idx);
@@ -385,11 +415,12 @@
       document.getElementById('count-manana').innerText = cManana;
       document.getElementById('count-proximos').innerText = cProximos;
       document.getElementById('count-sinfecha').innerText = cSinFecha;
+      document.getElementById('count-completed').innerText = cCompleted;
     }
 
     function createEditableCardHTML(task, idx) {
       const card = document.createElement('div');
-      card.className = 'task-card';
+      card.className = `task-card ${task.completed ? 'card-completed' : ''}`;
 
       const dtValue = task.date_time ? task.date_time.slice(0, 16) : '';
 
@@ -436,7 +467,7 @@
 
         <!-- Large Note Body Space -->
         <div class="mb-3">
-          <textarea class="card-note-textarea" placeholder="Escribí o dictá el texto completo de tu nota aquí..."
+          <textarea class="card-note-textarea ${task.completed ? 'text-decoration-line-through text-muted' : ''}" placeholder="Escribí o dictá el texto completo de tu nota aquí..."
                     oninput="updateField(${idx}, 'title', this.value)">${task.title}</textarea>
         </div>
         
@@ -455,9 +486,14 @@
 
         <!-- Bottom Actions -->
         <div class="d-flex gap-1 justify-content-between align-items-center pt-2 border-top">
-          <button class="btn btn-sm btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="deleteTask(${idx})">
-            <i class="bi bi-trash"></i> Eliminar
-          </button>
+          <div class="d-flex gap-2 align-items-center">
+            <button class="btn btn-sm ${task.completed ? 'btn-success' : 'btn-outline-success'} py-0 px-2" style="font-size: 0.78rem;" onclick="toggleTaskCompletion(${idx})" title="Marcar como completada">
+              <i class="bi ${task.completed ? 'bi-check-circle-fill' : 'bi-check-circle'}"></i> ${task.completed ? 'Completada' : 'Completar'}
+            </button>
+            <button class="btn btn-sm btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="deleteTask(${idx})">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
           <div class="d-flex gap-1 flex-wrap">
             <button class="btn btn-sm btn-outline-dark py-0 px-2" style="font-size: 0.75rem;" onclick="syncObsidian(${idx})" title="Guardar nota en Obsidian">
               <i class="bi bi-journal-markdown"></i> Obsidian
