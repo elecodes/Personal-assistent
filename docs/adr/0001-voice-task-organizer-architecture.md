@@ -11,8 +11,9 @@ The user needed an intuitive productivity tool to capture thoughts and tasks via
 
 * **Zero Cost (Free Tier First)**: Eliminate subscription and API costs by prioritizing native browser capabilities (Web Speech API) and free-tier APIs/protocols.
 * **Low Friction Capture**: Support continuous Spanish voice dictation without premature auto-pausing.
-* **Visual Actionable Organization**: Group tasks into a day-based calendar board (*Hoy*, *Mañana*, *Próximos días*, *Sin Fecha*) with editable checklist steps.
-* **Multi-destination Ecosystem Integration**: Sync structured tasks seamlessly to Notion API, local Obsidian Vaults (direct Markdown write and `obsidian://new` URI protocol), and Google Calendar.
+* **Visual Actionable Organization**: Group tasks into a day-based calendar board (*Hoy*, *Mañana*, *Próximos días*, *Sin Fecha*) with editable checklist steps and explicit task completion toggles.
+* **Silent Background Knowledge Base Export**: Export notes to Obsidian directly in background disk mode (`obsidian_vault/Substack`) without launching or interrupting the user with desktop app focus changes.
+* **Multi-destination Ecosystem Integration**: Sync structured tasks seamlessly to Notion API, local Obsidian Vaults, and Google Calendar.
 
 ## Considered Options
 
@@ -27,7 +28,7 @@ Chosen option: **Option 2 (FastAPI + Web Speech API Frontend)** because it deliv
 
 * $0 operational cost across voice recognition, Notion API, Obsidian Markdown export, and Google Calendar links.
 * Responsive, zero-latency visual board with inline editable cards, checklists, and calendar date pickers.
-* Support for Obsidian Vault export via direct disk write or native `obsidian://new?vault=...&file=...&content=...` URI routing into specific subfolders.
+* 100% silent background Markdown note writing into `obsidian_vault/Substack` with fallback to official `obsidian://new?vault=...&file=...&content=...` URI routing.
 
 ### Negative Consequences
 
