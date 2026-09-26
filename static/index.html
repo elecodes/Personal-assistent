@@ -145,6 +145,16 @@
       border-color: #3b82f6 !important;
       box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
     }
+    .audio-listen-btn {
+      color: #3b82f6;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: transform 0.2s;
+    }
+    .audio-listen-btn:hover {
+      transform: scale(1.15);
+      color: #1d4ed8;
+    }
   </style>
 </head>
 <body>
@@ -153,7 +163,7 @@
     <div class="container">
       <h3 class="fw-bold m-0"><i class="bi bi-mic-fill text-primary"></i> Organizador Visual por Voz</h3>
       <p class="text-light small mt-1 mb-0 fw-semibold">Soy Creadora. Tecnología para un fin</p>
-      <p class="text-light-50 mt-1 mb-0" style="font-size: 0.82rem; opacity: 0.85;">Dictá tu nota -> Visualizá la tarjeta -> Sincronizá con Notion, Obsidian y Calendario</p>
+      <p class="text-light-50 mt-1 mb-0" style="font-size: 0.82rem; opacity: 0.85;">Dictá tu nota -> Visualizá la tarjeta -> Escuchá el resumen -> Sincronizá con Notion, Obsidian y Calendario</p>
     </div>
   </header>
 
@@ -199,7 +209,10 @@
       <div class="col-md-3">
         <div class="board-column" id="col-hoy">
           <div class="board-column-header text-primary">
-            <span><i class="bi bi-calendar-event"></i> Hoy</span>
+            <div class="d-flex align-items-center gap-2">
+              <span><i class="bi bi-calendar-event"></i> Hoy</span>
+              <i class="bi bi-volume-up-fill audio-listen-btn" title="Escuchar notas de Hoy" onclick="speakColumn('hoy', 'Hoy')"></i>
+            </div>
             <span class="badge bg-primary rounded-pill" id="count-hoy">0</span>
           </div>
           <div class="cards-container" id="container-hoy"></div>
@@ -210,7 +223,10 @@
       <div class="col-md-3">
         <div class="board-column" id="col-manana">
           <div class="board-column-header text-info">
-            <span><i class="bi bi-calendar-plus"></i> Mañana</span>
+            <div class="d-flex align-items-center gap-2">
+              <span><i class="bi bi-calendar-plus"></i> Mañana</span>
+              <i class="bi bi-volume-up-fill audio-listen-btn" title="Escuchar notas de Mañana" onclick="speakColumn('manana', 'Mañana')"></i>
+            </div>
             <span class="badge bg-info rounded-pill" id="count-manana">0</span>
           </div>
           <div class="cards-container" id="container-manana"></div>
@@ -221,7 +237,10 @@
       <div class="col-md-3">
         <div class="board-column" id="col-proximos">
           <div class="board-column-header text-warning">
-            <span><i class="bi bi-calendar-week"></i> Próximos Días</span>
+            <div class="d-flex align-items-center gap-2">
+              <span><i class="bi bi-calendar-week"></i> Próximos Días</span>
+              <i class="bi bi-volume-up-fill audio-listen-btn" title="Escuchar notas de Próximos Días" onclick="speakColumn('proximos', 'Próximos Días')"></i>
+            </div>
             <span class="badge bg-warning text-dark rounded-pill" id="count-proximos">0</span>
           </div>
           <div class="cards-container" id="container-proximos"></div>
@@ -232,7 +251,10 @@
       <div class="col-md-3">
         <div class="board-column" id="col-sinfecha">
           <div class="board-column-header text-secondary">
-            <span><i class="bi bi-journal-text"></i> Sin Fecha / Backlog</span>
+            <div class="d-flex align-items-center gap-2">
+              <span><i class="bi bi-journal-text"></i> Sin Fecha / Backlog</span>
+              <i class="bi bi-volume-up-fill audio-listen-btn" title="Escuchar notas sin fecha" onclick="speakColumn('sinfecha', 'Sin fecha')"></i>
+            </div>
             <span class="badge bg-secondary rounded-pill" id="count-sinfecha">0</span>
           </div>
           <div class="cards-container" id="container-sinfecha"></div>
@@ -377,6 +399,72 @@
       }
     }
 
+    function getTasksForColumn(columnKey) {
+      const now = new Date();
+      const todayStr = now.toISOString().slice(0, 10);
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+
+      return tasksList.filter(task => {
+        if (task.completed && !showCompleted) return false;
+
+        if (columnKey === 'sinfecha') return !task.date_time;
+
+        if (!task.date_time) return false;
+        const datePart = task.date_time.slice(0, 10);
+
+        if (columnKey === 'hoy') return datePart === todayStr;
+        if (columnKey === 'manana') return datePart === tomorrowStr;
+        if (columnKey === 'proximos') return datePart !== todayStr && datePart !== tomorrowStr;
+
+        return false;
+      });
+    }
+
+    // Text-To-Speech (TTS) functionality
+    function speakText(text) {
+      if (!('speechSynthesis' in window)) {
+        alert('Tu navegador no soporta sintetización de voz.');
+        return;
+      }
+      window.speechSynthesis.cancel(); // Stop ongoing speech
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'es-ES';
+      utterance.rate = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function speakColumn(columnKey, columnLabel) {
+      const tasks = getTasksForColumn(columnKey);
+      if (tasks.length === 0) {
+        speakText(`No tienes notas registradas para ${columnLabel}.`);
+        return;
+      }
+
+      let text = `Resumen de notas para ${columnLabel}. Tienes ${tasks.length} ${tasks.length === 1 ? 'nota' : 'notas'}. `;
+      tasks.forEach((task, i) => {
+        text += `Nota ${i + 1}: ${task.title}. Categoría: ${task.category}. Prioridad: ${task.priority}. `;
+        if (task.steps && task.steps.length > 0) {
+          text += `Pasos: ${task.steps.join(', ')}. `;
+        }
+      });
+
+      speakText(text);
+    }
+
+    function speakSingleTask(id) {
+      const task = findTaskById(id);
+      if (!task) return;
+
+      let text = `Nota: ${task.title}. Categoría: ${task.category}, Prioridad: ${task.priority}. `;
+      if (task.steps && task.steps.length > 0) {
+        text += `Pasos: ${task.steps.join(', ')}. `;
+      }
+      speakText(text);
+    }
+
     function renderBoard() {
       document.getElementById('container-hoy').innerHTML = '';
       document.getElementById('container-manana').innerHTML = '';
@@ -394,7 +482,6 @@
       tasksList.forEach((task) => {
         if (task.completed) cCompleted++;
 
-        // Skip completed tasks if showCompleted is false
         if (task.completed && !showCompleted) return;
 
         let targetContainer = 'container-sinfecha';
@@ -502,7 +589,10 @@
               <i class="bi bi-trash"></i>
             </button>
           </div>
-          <div class="d-flex gap-1 flex-wrap">
+          <div class="d-flex gap-1 flex-wrap align-items-center">
+            <button class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;" onclick="speakSingleTask('${task.id}')" title="Escuchar esta nota en voz alta">
+              <i class="bi bi-volume-up-fill"></i> Escuchar
+            </button>
             <button class="btn btn-sm btn-outline-dark py-0 px-2" style="font-size: 0.75rem;" onclick="syncObsidian('${task.id}')" title="Guardar nota en Obsidian">
               <i class="bi bi-journal-markdown"></i> Obsidian
             </button>
