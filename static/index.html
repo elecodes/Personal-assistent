@@ -152,7 +152,8 @@
   <header class="hero-header text-center mb-4">
     <div class="container">
       <h3 class="fw-bold m-0"><i class="bi bi-mic-fill text-primary"></i> Organizador Visual por Voz</h3>
-      <p class="text-light small mt-1 mb-0">Soy Creadora. Tecnología para un fin</p>
+      <p class="text-light small mt-1 mb-0 fw-semibold">Soy Creadora. Tecnología para un fin</p>
+      <p class="text-light-50 mt-1 mb-0" style="font-size: 0.82rem; opacity: 0.85;">Dictá tu nota -> Visualizá la tarjeta -> Sincronizá con Notion, Obsidian y Calendario</p>
     </div>
   </header>
 
@@ -386,7 +387,6 @@
       tasksList.forEach((task, idx) => {
         if (task.completed) cCompleted++;
 
-        // If card is completed and we're not showing completed cards, skip rendering it
         if (task.completed && !showCompleted) return;
 
         let targetContainer = 'container-sinfecha';
