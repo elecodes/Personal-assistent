@@ -459,7 +459,7 @@
             <i class="bi bi-trash"></i> Eliminar
           </button>
           <div class="d-flex gap-1 flex-wrap">
-            <button class="btn btn-sm btn-outline-dark py-0 px-2" style="font-size: 0.75rem;" onclick="syncObsidian(${idx})" title="Abrir y crear nota en Obsidian">
+            <button class="btn btn-sm btn-outline-dark py-0 px-2" style="font-size: 0.75rem;" onclick="syncObsidian(${idx})" title="Guardar nota en Obsidian">
               <i class="bi bi-journal-markdown"></i> Obsidian
             </button>
             ${task.date_time ? `
@@ -535,11 +535,9 @@
         const data = await res.json();
         if (data.success) {
           if (data.saved_to_disk) {
-            alert('¡Nota guardada directo en tu carpeta de Obsidian!\n' + data.saved_file_path);
-          }
-          if (data.obsidian_uri) {
-            // Trigger native Obsidian URL protocol to immediately open/create inside Obsidian
-            window.location.href = data.obsidian_uri;
+            alert('✅ Nota guardada en segundo plano en tu carpeta de Obsidian:\n' + data.saved_file_path);
+          } else {
+            alert('✅ Nota enviada a tu carpeta Substack en Obsidian.');
           }
         }
       } catch (e) { alert('Error exportando a Obsidian: ' + e.message); }

@@ -90,7 +90,7 @@ async def create_task(payload: TaskPayload):
 
 @app.post("/api/obsidian")
 async def export_to_obsidian(payload: TaskPayload):
-    """Export task as a Markdown file to Obsidian using URI file parameter for subfolders."""
+    """Export task as a Markdown file directly to Obsidian Vault in background (without focusing app)."""
     title_clean = re.sub(r'[\\/*?:"<>|]', "", payload.title).strip() or "Nota"
     filename = f"{title_clean}.md"
 
@@ -117,16 +117,16 @@ tags:
 {steps_md}
 """
 
-    vault_path_env = os.getenv("OBSIDIAN_VAULT_PATH")
-    vault_name_env = os.getenv("OBSIDIAN_VAULT_NAME")
-    folder_env = os.getenv("OBSIDIAN_FOLDER", "").strip("/")
+    vault_path_raw = os.getenv("OBSIDIAN_VAULT_PATH", "").strip('"\'')
+    vault_name_raw = os.getenv("OBSIDIAN_VAULT_NAME", "").strip('"\'')
+    folder_raw = os.getenv("OBSIDIAN_FOLDER", "").strip('"\'/ ')
 
     saved_to_disk = False
     saved_file_path = None
 
-    if vault_path_env:
-        base_dir = Path(os.path.expanduser(vault_path_env))
-        target_dir = base_dir / folder_env if folder_env else base_dir
+    if vault_path_raw:
+        base_dir = Path(os.path.expanduser(vault_path_raw))
+        target_dir = base_dir / folder_raw if folder_raw else base_dir
         
         try:
             target_dir.mkdir(parents=True, exist_ok=True)
@@ -137,11 +137,10 @@ tags:
         except Exception as e:
             logger.warning("Fallo al guardar directamente en disco: %s", e)
 
-    # Use 'file' parameter (relative path from vault root) to force creation inside target subfolder
-    relative_path = f"{folder_env}/{title_clean}" if folder_env else title_clean
+    relative_path = f"{folder_raw}/{title_clean}" if folder_raw else title_clean
 
-    if vault_name_env:
-        obsidian_uri = f"obsidian://new?vault={quote(vault_name_env)}&file={quote(relative_path)}&content={quote(md_content)}"
+    if vault_name_raw:
+        obsidian_uri = f"obsidian://new?vault={quote(vault_name_raw)}&file={quote(relative_path)}&content={quote(md_content)}"
     else:
         obsidian_uri = f"obsidian://new?file={quote(relative_path)}&content={quote(md_content)}"
 
