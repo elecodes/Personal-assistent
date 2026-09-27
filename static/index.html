@@ -509,6 +509,22 @@ Dictá por ejemplo: "Trabajo: preparar informe trimestral urgente para el vierne
     }
 
     function commitCurrentDraft() {
+      if (!activeDraftId || !findTaskById(activeDraftId)) {
+        const newId = 'task-' + Date.now();
+        const newTask = {
+          id: newId,
+          title: 'Nueva Tarea / Idea',
+          category: 'Ideas',
+          priority: 'Media',
+          date_time: null,
+          steps: [],
+          completed: false
+        };
+        tasksList.push(newTask);
+        renderBoard();
+        showToast('¡Nueva tarjeta creada!', 'success');
+        return;
+      }
       activeDraftId = null;
       finalTranscript = '';
       document.getElementById('transcriptText').innerText = 'Tarjeta creada. Presioná el micrófono para la siguiente.';
@@ -770,9 +786,6 @@ Dictá por ejemplo: "Trabajo: preparar informe trimestral urgente para el vierne
             </button>
             <button class="btn btn-sm btn-outline-dark action-btn-pill" onclick="syncObsidian('${task.id}')" title="Exportar a Obsidian">
               <i class="bi bi-markdown-fill"></i> Obsidian
-            </button>
-            <button class="btn btn-sm btn-outline-info action-btn-pill" onclick="syncFirebase('${task.id}')" title="Guardar en Firebase Cloud">
-              <i class="bi bi-cloud-arrow-up-fill"></i> Firebase
             </button>
             <button class="btn btn-sm btn-outline-warning action-btn-pill text-dark" onclick="syncGCal('${task.id}')" title="Agendar en Google Calendar">
               <i class="bi bi-calendar-event"></i> GCal
