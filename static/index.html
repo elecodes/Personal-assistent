@@ -507,7 +507,10 @@ Dictá por ejemplo: "Trabajo: preparar informe trimestral urgente para el vierne
       if (!activeDraftId) activeDraftId = 'task-' + Date.now();
       
       const idx = tasksList.findIndex(t => t.id === activeDraftId);
+      const existingTask = idx >= 0 ? tasksList[idx] : {};
+
       const taskObj = {
+        ...existingTask,
         id: activeDraftId,
         title: parsedTask.title || 'Nueva Idea',
         category: parsedTask.category || 'Ideas',
@@ -518,11 +521,21 @@ Dictá por ejemplo: "Trabajo: preparar informe trimestral urgente para el vierne
       };
 
       if (idx >= 0) {
-        tasksList[idx] = { ...tasksList[idx], ...taskObj };
+        tasksList[idx] = taskObj;
       } else {
         tasksList.push(taskObj);
       }
       renderBoard();
+
+      // Trigger automatic sync if commanded by voice/text
+      if (parsedTask.sync_notion && !taskObj._synced_notion) {
+        taskObj._synced_notion = true;
+        syncNotion(taskObj.id);
+      }
+      if (parsedTask.sync_obsidian && !taskObj._synced_obsidian) {
+        taskObj._synced_obsidian = true;
+        syncObsidian(taskObj.id);
+      }
     }
 
     function commitCurrentDraft() {

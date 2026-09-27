@@ -45,7 +45,11 @@ def parse_transcript(transcript: str, reference_date: datetime | None = None) ->
     # 4. Extract Steps / Checklist
     steps = _extract_steps(text)
 
-    # 5. Extract Title
+    # 5. Extract Sync Triggers (Notion / Obsidian)
+    sync_notion = bool(re.search(r"\b(añadir|anadir|add|enviar|guardar|subir|sync|sincronizar|exportar)\b.*?\bnotion\b", text_lower))
+    sync_obsidian = bool(re.search(r"\b(añadir|anadir|add|enviar|guardar|subir|sync|sincronizar|exportar)\b.*?\bobsidian\b", text_lower))
+
+    # 6. Extract Title
     title = _clean_title(text)
 
     return {
@@ -54,6 +58,8 @@ def parse_transcript(transcript: str, reference_date: datetime | None = None) ->
         "priority": priority,
         "date_time": date_time_str,
         "steps": steps,
+        "sync_notion": sync_notion,
+        "sync_obsidian": sync_obsidian,
     }
 
 
@@ -132,27 +138,28 @@ def _extract_date_time(text: str, ref: datetime) -> str | None:
 
 def _extract_steps(text: str) -> list[str]:
     """Extract step list from Spanish dictation intelligently."""
+    # Pre-clean sync trigger phrases
+    clean_text = re.sub(r"\b(añadir|anadir|add|enviar|guardar|subir|sync|sincronizar|exportar)\s+(a\s+|en\s+|to\s+)?(notion|obsidian)\b", "", text, flags=re.IGNORECASE).strip()
+
     steps: list[str] = []
 
     # 1. Split by newlines if present
-    if "\n" in text:
-        lines = [line.strip(" -*•") for line in text.split("\n") if line.strip()]
+    if "\n" in clean_text:
+        lines = [line.strip(" -*•") for line in clean_text.split("\n") if line.strip()]
         if len(lines) > 1:
             return [l.capitalize() for l in lines]
 
     # 2. Check for explicit list prefix like "pasos:", "tareas:", "checklist:"
-    steps_match = re.search(r"\b(pasos|paso|tareas|checklist|subtareas):\s*(.*)", text, re.IGNORECASE)
-    raw_text = steps_match.group(2) if steps_match else text
+    steps_match = re.search(r"\b(pasos|paso|tareas|checklist|subtareas):\s*(.*)", clean_text, re.IGNORECASE)
+    raw_text = steps_match.group(2) if steps_match else clean_text
 
     # 3. Split by dictation delimiters:
-    # - Punctuation: . , ;
-    # - Ordinals/numbers: primero, segundo, tercero, punto 1, 1., 2.
-    # - Spoken punctuation / connectors: "luego", "después", "además", "también"
     pattern = r"[\.\;\n]|(?:\b(?:primero|segundo|tercero|cuarto|quinto|luego|después|despues|además|ademas|también|tambien|punto|coma|nuevo renglón|nueva línea|tarea|subtarea)\b|\bpunto\s*\d+\b|\b\d+[\.\)]\s*)"
     
     parts = re.split(pattern, raw_text, flags=re.IGNORECASE)
     for part in parts:
         cleaned = re.sub(r"^(y|o|e|que)\s+", "", part.strip(" ,.-*•"), flags=re.IGNORECASE).strip()
+        cleaned = re.sub(r"\s+\b(y|o|e|que|en|para)\s*$", "", cleaned, flags=re.IGNORECASE).strip()
         if len(cleaned) > 2:
             steps.append(cleaned.capitalize())
 
@@ -172,7 +179,7 @@ def _extract_steps(text: str) -> list[str]:
         "bug", "feature", "pipeline", "build", "refactor"
     ]
     verb_pattern = r"\b(?=(?:" + "|".join(re.escape(w) for w in actions_list) + r")\b)"
-    verb_parts = re.split(verb_pattern, text, flags=re.IGNORECASE)
+    verb_parts = re.split(verb_pattern, clean_text, flags=re.IGNORECASE)
     verb_steps = [re.sub(r"^(y|o|e|que)\s+", "", p.strip(" ,.-"), flags=re.IGNORECASE).strip().capitalize() for p in verb_parts if len(p.strip(" ,.-")) > 2]
     if len(verb_steps) > 1:
         return verb_steps
@@ -190,11 +197,13 @@ def _clean_title(text: str) -> str:
     cleaned = re.sub(r"\b(prioridad|urgente)\s*(alta|media|baja)?\b", "", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\b(para mañana|mañana|hoy|pasado mañana|el [a-z]+)\b", "", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\ba las \d{1,2}(:\d{2})?\s*(am|pm)?\b", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\b(añadir|anadir|add|enviar|guardar|subir|sync|sincronizar|exportar)\s+(a\s+|en\s+|to\s+)?(notion|obsidian)\b", "", cleaned, flags=re.IGNORECASE)
 
     cleaned = re.sub(r"\s*[\.\;]\s*", "\n", cleaned)
     cleaned = re.sub(r"\s*\b(primero|segundo|tercero|cuarto|quinto|luego|después|despues|punto \d+|tarea \d+|\d+[\.\)])\b\s*", "\n• ", cleaned, flags=re.IGNORECASE)
 
-    lines = [l.strip(" ,.-") for l in cleaned.split("\n") if l.strip(" ,.-")]
+    lines = [re.sub(r"\s+\b(y|o|e|que|en|para)\s*$", "", l.strip(" ,.-"), flags=re.IGNORECASE) for l in cleaned.split("\n") if l.strip(" ,.-")]
+    lines = [l for l in lines if l]
     if not lines:
         lines = [text[:50]]
 

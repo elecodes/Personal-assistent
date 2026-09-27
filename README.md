@@ -17,8 +17,8 @@ Organizador visual de tareas por dictado de voz (100% Free Tier) que convierte n
 * ✏️ **Tarjetas 100% Editables**: Modificación in-situ de títulos, categorías, prioridades, fechas y listas de chequeo con foco automático al agregar pasos.
 * 📑 **Estado de Completado & Filtro**: Marcado de tarjetas completadas que permanecen activas hasta su resolución y se archivan limpiamente del tablero.
 * 📓 **Guardado Silencioso en Obsidian**: Exportación de notas en Markdown con metadatos YAML frontmatter a tu carpeta local de Obsidian (`obsidian_vault/Substack`) en segundo plano sin desplegar la app de Obsidian.
-* 📘 **Integración con Notion (Data Sources & Calendario)**: Inserción directa en Tablas de Base de Datos y Calendarios de Notion a través de Notion Data Source API con soporte `multi_select`.
-* 🗓️ **Google Calendar**: Generación instantánea de eventos agendados con listas de comprobación.
+* ⚡ **Sincronización Manos Libres por Voz**: Detección inteligente de comandos como `añadir a Notion`, `add to Obsidian`, `enviar a Notion` o `exportar a Obsidian` en la frase dictada para sincronizar directamente sin hacer clic.
+* 💾 **Persistencia de Tablero Local (`localStorage`)**: Las tarjetas y listas editadas se conservan automáticamente entre sesiones y reinicios del navegador.
 
 ---
 

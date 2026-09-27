@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-09-27
+
+### Added
+- **Hands-Free Voice Auto-Sync**: Automatic sync triggers for Notion and Obsidian parsed directly from dictation or typed commands (`añadir a notion`, `add to obsidian`, `enviar a notion`, `sync obsidian`) without needing manual clicks.
+- **LocalStorage Board Persistence**: Full dashboard state retention using `localStorage` so cards and checklist edits remain intact across sessions and browser reloads.
+- **UI & UX Refinements**: Manual card creation fix without active mic required, focus loss prevention during text editing, and automatic clearing of default card titles on focus.
+
 ## [1.3.0] - 2026-09-27
 
 ### Added
