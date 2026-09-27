@@ -345,6 +345,9 @@
           const data = await res.json();
           if (data.success && data.task) {
             updateOrCreateDraftTask(data.task);
+            if (data.task.title) {
+              document.getElementById('transcriptText').innerText = data.task.title;
+            }
           }
         } catch (e) { console.error(e); }
       }, 500);
@@ -422,18 +425,27 @@
       });
     }
 
-    // Text-To-Speech (TTS) functionality
-    function speakText(text) {
-      if (!('speechSynthesis' in window)) {
-        alert('Tu navegador no soporta sintetización de voz.');
-        return;
-      }
-      window.speechSynthesis.cancel(); // Stop ongoing speech
+    // Text-To-Speech (TTS) via Amazon Polly (Neural)
+    async function speakText(text) {
+      if (!text || !text.trim()) return;
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'es-ES';
-      utterance.rate = 1.0;
-      window.speechSynthesis.speak(utterance);
+      try {
+        const response = await fetch('/api/polly/stream?text=' + encodeURIComponent(text));
+        if (!response.ok) throw new Error('Polly synthesis failed');
+
+        const blob = await response.blob();
+        const audioUrl = URL.createObjectURL(blob);
+        const audio = new Audio(audioUrl);
+        await audio.play();
+      } catch (err) {
+        console.warn('Fallo Amazon Polly, usando síntesis del navegador de respaldo:', err);
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'es-ES';
+          window.speechSynthesis.speak(utterance);
+        }
+      }
     }
 
     function speakColumn(columnKey, columnLabel) {
@@ -668,9 +680,9 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(task)
         });
-        const data = await res.json();
-        if (data.success) alert('¡Tarjeta sincronizada a Notion!');
-        else alert('Error: ' + data.detail);
+        const data = await res.json().catch(() => ({ detail: 'Error de servidor (HTTP ' + res.status + ')' }));
+        if (res.ok && data.success) alert('¡Tarjeta sincronizada a Notion!');
+        else alert('Error: ' + (data.detail || 'Fallo la sincronización con Notion'));
       } catch (e) { alert('Error: ' + e.message); }
     }
 

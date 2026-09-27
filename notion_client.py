@@ -164,8 +164,8 @@ def build_task_properties(task: Task) -> tuple[dict[str, Any], list[str]]:
                 {"type": "text", "text": {"content": _truncate(task.title, warnings, "title")}}
             ]
         },
-        PROP_CATEGORY: {"select": {"name": task.category}},
-        PROP_PRIORITY: {"select": {"name": task.priority}},
+        PROP_CATEGORY: {"multi_select": [{"name": task.category}]},
+        PROP_PRIORITY: {"multi_select": [{"name": task.priority}]},
     }
 
     if task.date_time is not None:
@@ -225,7 +225,7 @@ def build_page_plan(task: Task, data_source_id: str = PLACEHOLDER_DATA_SOURCE_ID
     initial, batches = split_children(children)
 
     body: dict[str, Any] = {
-        "parent": {"type": "data_source_id", "data_source_id": data_source_id},
+        "parent": {"data_source_id": data_source_id},
         "properties": properties,
     }
     if initial:
@@ -381,9 +381,27 @@ class NotionClient:
         try:
             page = self._request("POST", "/pages", plan.page_body)
         except NotionAPIError as exc:
-            logger.error("Failed to create page for %r: %s", task.title, exc)
-            result.error = str(exc)
-            return result
+            # Fallback 1: Try database_id parent
+            try:
+                db_body = dict(plan.page_body)
+                db_body["parent"] = {"database_id": self.config.data_source_id}
+                page = self._request("POST", "/pages", db_body)
+            except NotionAPIError as db_exc:
+                # Fallback 2: Try page_id parent
+                try:
+                    fallback_body: dict[str, Any] = {
+                        "parent": {"page_id": self.config.data_source_id},
+                        "properties": {
+                            "title": {"title": [{"type": "text", "text": {"content": task.title}}]}
+                        }
+                    }
+                    if plan.page_body.get("children"):
+                        fallback_body["children"] = plan.page_body["children"]
+                    page = self._request("POST", "/pages", fallback_body)
+                except NotionAPIError as fallback_exc:
+                    logger.error("Failed to create page for %r: %s", task.title, fallback_exc)
+                    result.error = str(fallback_exc)
+                    return result
 
         page_id = page.get("id")
         if not isinstance(page_id, str) or not page_id:

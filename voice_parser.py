@@ -131,47 +131,72 @@ def _extract_date_time(text: str, ref: datetime) -> str | None:
 
 
 def _extract_steps(text: str) -> list[str]:
-    """Extract step list from Spanish dictation."""
+    """Extract step list from Spanish dictation intelligently."""
     steps: list[str] = []
 
-    # Look for explicit list pattern like "pasos: ... y luego ...", or "primero ... segundo ..."
-    steps_match = re.search(r"\b(pasos|paso|tareas|checklist):\s*(.*)", text, re.IGNORECASE)
-    if steps_match:
-        raw_steps = steps_match.group(2)
-        # Split by comma, 'y', 'luego', 'después'
-        parts = re.split(r",|\by\b|\bluego\b|\bdespués\b|\bdespues\b", raw_steps)
-        for part in parts:
-            cleaned = part.strip()
-            if cleaned:
-                steps.append(cleaned.capitalize())
+    # 1. Split by newlines if present
+    if "\n" in text:
+        lines = [line.strip(" -*•") for line in text.split("\n") if line.strip()]
+        if len(lines) > 1:
+            return [l.capitalize() for l in lines]
+
+    # 2. Check for explicit list prefix like "pasos:", "tareas:", "checklist:"
+    steps_match = re.search(r"\b(pasos|paso|tareas|checklist|subtareas):\s*(.*)", text, re.IGNORECASE)
+    raw_text = steps_match.group(2) if steps_match else text
+
+    # 3. Split by dictation delimiters:
+    # - Punctuation: . , ;
+    # - Ordinals/numbers: primero, segundo, tercero, punto 1, 1., 2.
+    # - Spoken punctuation / connectors: "luego", "después", "además", "también"
+    pattern = r"[\.\;\n]|(?:\b(?:primero|segundo|tercero|cuarto|quinto|luego|después|despues|además|ademas|también|tambien|punto|coma|nuevo renglón|nueva línea|tarea|subtarea)\b|\bpunto\s*\d+\b|\b\d+[\.\)]\s*)"
+    
+    parts = re.split(pattern, raw_text, flags=re.IGNORECASE)
+    for part in parts:
+        cleaned = re.sub(r"^(y|o|e|que)\s+", "", part.strip(" ,.-*•"), flags=re.IGNORECASE).strip()
+        if len(cleaned) > 2:
+            steps.append(cleaned.capitalize())
+
+    if len(steps) > 1:
         return steps
 
-    # Check for ordinal markers: primero, segundo, tercero
-    ordinal_parts = re.split(r"\b(primero|segundo|tercero|luego|después|despues)\b", text, flags=re.IGNORECASE)
-    if len(ordinal_parts) > 3:
-        for i in range(2, len(ordinal_parts), 2):
-            step_text = ordinal_parts[i].strip()
-            if step_text:
-                steps.append(step_text.capitalize())
-        return steps
+    # 4. Fallback: split by common action verbs and anglicisms if no explicit delimiters found
+    actions_list = [
+        "comprar", "llamar", "enviar", "hacer", "revisar", "preparar", "escribir",
+        "estudiar", "organizar", "ir a", "buscar", "pagar", "subir", "mandar",
+        "borrar", "crear", "editar", "verificar", "analizar", "corregir",
+        "deploy", "deployar", "meeting", "call", "pr", "pull request", "check",
+        "checkear", "chequear", "test", "testing", "testear", "commit", "commitear",
+        "merge", "mergear", "push", "pushear", "pull", "sync", "sincronizar",
+        "review", "code review", "feedback", "backup", "post", "postear",
+        "update", "updatear", "release", "sprint", "standup", "ticket", "issue",
+        "bug", "feature", "pipeline", "build", "refactor"
+    ]
+    verb_pattern = r"\b(?=(?:" + "|".join(re.escape(w) for w in actions_list) + r")\b)"
+    verb_parts = re.split(verb_pattern, text, flags=re.IGNORECASE)
+    verb_steps = [re.sub(r"^(y|o|e|que)\s+", "", p.strip(" ,.-"), flags=re.IGNORECASE).strip().capitalize() for p in verb_parts if len(p.strip(" ,.-")) > 2]
+    if len(verb_steps) > 1:
+        return verb_steps
 
-    return steps
+    return steps if len(steps) > 1 else []
 
 
 def _clean_title(text: str) -> str:
-    """Clean title removing keywords."""
-    # Remove category markers
-    cleaned = re.sub(r"\b(categoría|categoria|para|en)\s+(trabajo|personal|ideas|proyectos)\b", "", text, flags=re.IGNORECASE)
-    # Remove priority markers
-    cleaned = re.sub(r"\b(prioridad|urgente)\s*(alta|media|baja)?\b", "", cleaned, flags=re.IGNORECASE)
-    # Remove date markers
-    cleaned = re.sub(r"\b(para mañana|mañana|hoy|pasado mañana|el [a-z]+)\b", "", cleaned, flags=re.IGNORECASE)
-    # Remove time markers
-    cleaned = re.sub(r"\ba las \d{1,2}(:\d{2})?\s*(am|pm)?\b", "", cleaned, flags=re.IGNORECASE)
-    # Remove steps section if present
-    cleaned = re.split(r"\b(pasos|paso|tareas|checklist):", cleaned, flags=re.IGNORECASE)[0]
+    """Clean title removing keywords and preserving multi-line structure."""
+    steps = _extract_steps(text)
+    if len(steps) > 1:
+        return "\n".join(f"• {s}" for s in steps)
 
-    cleaned = re.sub(r"\s+", " ", cleaned).strip(" ,.-")
-    if not cleaned:
-        cleaned = text[:50]
-    return cleaned.capitalize()
+    cleaned = re.sub(r"\b(categoría|categoria|para|en)\s+(trabajo|personal|ideas|proyectos)\b", "", text, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\b(prioridad|urgente)\s*(alta|media|baja)?\b", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\b(para mañana|mañana|hoy|pasado mañana|el [a-z]+)\b", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\ba las \d{1,2}(:\d{2})?\s*(am|pm)?\b", "", cleaned, flags=re.IGNORECASE)
+
+    cleaned = re.sub(r"\s*[\.\;]\s*", "\n", cleaned)
+    cleaned = re.sub(r"\s*\b(primero|segundo|tercero|cuarto|quinto|luego|después|despues|punto \d+|tarea \d+|\d+[\.\)])\b\s*", "\n• ", cleaned, flags=re.IGNORECASE)
+
+    lines = [l.strip(" ,.-") for l in cleaned.split("\n") if l.strip(" ,.-")]
+    if not lines:
+        lines = [text[:50]]
+
+    formatted = "\n".join(l.capitalize() if not l.startswith("• ") else f"• {l[2:].capitalize()}" for l in lines)
+    return formatted

@@ -9,14 +9,15 @@ Organizador visual de tareas por dictado de voz (100% Free Tier) que convierte n
 
 ## Características Principales
 
-* 🎙️ **Dictado Continuo por Voz**: Transcripción en tiempo real en español utilizando la Web Speech API nativa (sin consumo de cuotas ni APIs de pago) con bucle de reconexión continua.
-* 🔊 **Text-to-Speech (TTS) Lectura por Voz**: Escuchá el resumen hablado de tus notas por columna diaria (*Hoy*, *Mañana*, *Próximos Días*, *Sin Fecha*) o por nota individual mediante `window.speechSynthesis` nativo ($0 cost).
-* 🧠 **Parser Inteligente de Lenguaje Natural**: Extrae automáticamente el título, categoría (`Trabajo`, `Personal`, `Ideas`, `Proyectos`), prioridad (`Alta`, `Media`, `Baja`), fecha/hora y pasos de comprobación.
+* 🎙️ **Dictado Continuo por Voz & Anglicismos**: Transcripción en tiempo real en español reconociendo términos técnicos y anglicismos (`deploy`, `meeting`, `PR`, `commit`, `merge`, `push`, `test`, `review`, `feedback`, `backup`, `issue`, `bug`, `feature`).
+* 🔊 **Amazon Polly Neural Text-to-Speech**: Síntesis de voz en alta definición utilizando el motor **Neural** de Amazon Polly (`Lupe`, `Mia`, `Lucia`) a través del endpoint `/api/polly/stream`.
+* ☁️ **Persistencia en la Nube con Firebase (Free Tier)**: Almacenamiento NoSQL de notas en **Cloud Firestore** y archivos de audio en **Cloud Storage** con la librería `firebase_client.py`.
+* 🧠 **Parser Inteligente de Lenguaje Natural**: Desglose automático de dictados corridos en listas estructuradas con saltos de línea y viñetas (`•`).
 * 📅 **Tablero Visual por Días**: Organización automática de tarjetas en columnas dinámicas (*Hoy*, *Mañana*, *Próximos Días*, *Sin Fecha / Backlog*).
 * ✏️ **Tarjetas 100% Editables**: Modificación in-situ de títulos, categorías, prioridades, fechas y listas de chequeo con foco automático al agregar pasos.
 * 📑 **Estado de Completado & Filtro**: Marcado de tarjetas completadas que permanecen activas hasta su resolución y se archivan limpiamente del tablero.
 * 📓 **Guardado Silencioso en Obsidian**: Exportación de notas en Markdown con metadatos YAML frontmatter a tu carpeta local de Obsidian (`obsidian_vault/Substack`) en segundo plano sin desplegar la app de Obsidian.
-* 📘 **Integración con Notion**: Creación automática de páginas con bloques to-do interactivos a través de la API oficial de Notion.
+* 📘 **Integración con Notion (Data Sources & Calendario)**: Inserción directa en Tablas de Base de Datos y Calendarios de Notion a través de Notion Data Source API con soporte `multi_select`.
 * 🗓️ **Google Calendar**: Generación instantánea de eventos agendados con listas de comprobación.
 
 ---

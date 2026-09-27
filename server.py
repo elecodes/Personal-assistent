@@ -27,6 +27,8 @@ from notion_client import (
     build_page_plan,
 )
 from voice_parser import parse_transcript
+from firebase_client import firebase_manager
+from polly_client import polly_manager
 
 load_dotenv()
 
@@ -45,6 +47,20 @@ class TaskPayload(BaseModel):
     priority: str
     date_time: str | None = None
     steps: list[str] = []
+
+
+class FirebaseNotePayload(BaseModel):
+    title: str
+    content: str
+    category: str = "Nota"
+    priority: str = "Media"
+    generate_audio: bool = False
+    tags: list[str] = []
+
+
+class PollyPayload(BaseModel):
+    text: str
+    voice_id: str = "Lupe"
 
 
 @app.get("/favicon.ico", include_in_schema=False)
@@ -79,15 +95,17 @@ async def create_task(payload: TaskPayload):
         steps=tuple(payload.steps),
     )
 
-    plan = build_page_plan(task, data_source_id=config.data_source_id)
     client = NotionClient(config)
 
     try:
-        result = client.create_page(plan)
+        result = client.insert_task(task)
+        if result.error:
+            raise HTTPException(status_code=502, detail=f"Error en Notion: {result.error}")
+
         return {
             "success": True,
             "page_id": result.page_id,
-            "url": result.url,
+            "url": getattr(result, "url", None),
             "calendar_url": generate_gcal_link(payload.title, payload.date_time, payload.steps),
         }
     except NotionAPIError as err:
@@ -164,6 +182,57 @@ async def get_calendar_link(payload: TaskPayload):
     """Generate a Google Calendar event creation link for a task."""
     link = generate_gcal_link(payload.title, payload.date_time, payload.steps)
     return {"google_calendar_url": link}
+
+
+@app.post("/api/firebase/notes")
+async def save_firebase_note(payload: FirebaseNotePayload):
+    """Save a note into Firebase Firestore (and optionally generate audio with Polly)."""
+    audio_url = None
+    if payload.generate_audio:
+        temp_file = f"/tmp/polly_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.mp3"
+        synthesized_path = polly_manager.synthesize_to_file(payload.content, temp_file)
+        if synthesized_path:
+            audio_url = firebase_manager.upload_audio_file(synthesized_path)
+
+    note_id = firebase_manager.save_note(
+        title=payload.title,
+        content=payload.content,
+        category=payload.category,
+        priority=payload.priority,
+        audio_url=audio_url,
+        tags=payload.tags,
+    )
+
+    if not note_id:
+        raise HTTPException(status_code=500, detail="Error guardando nota en Firestore.")
+
+    return {"success": True, "note_id": note_id, "audio_url": audio_url}
+
+
+@app.get("/api/firebase/notes")
+async def get_firebase_notes(limit: int = 50):
+    """Retrieve notes stored in Firebase Firestore."""
+    notes = firebase_manager.get_notes(limit=limit)
+    return {"success": True, "notes": notes}
+
+
+@app.post("/api/polly/synthesize")
+async def synthesize_speech(payload: PollyPayload):
+    """Synthesize text into speech using Amazon Polly."""
+    temp_file = f"/tmp/polly_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.mp3"
+    path = polly_manager.synthesize_to_file(payload.text, temp_file, voice_id=payload.voice_id)
+    if not path:
+        raise HTTPException(status_code=500, detail="Error sintetizando voz con Amazon Polly.")
+    return {"success": True, "file_path": path}
+
+
+@app.get("/api/polly/stream")
+async def stream_polly_speech(text: str, voice_id: str = "Lupe"):
+    """Stream audio synthesized by Amazon Polly directly as MP3."""
+    audio_bytes = polly_manager.synthesize_bytes(text, voice_id=voice_id, engine="neural")
+    if not audio_bytes:
+        raise HTTPException(status_code=500, detail="Error al generar audio con Amazon Polly.")
+    return Response(content=audio_bytes, media_type="audio/mpeg")
 
 
 def generate_gcal_link(title: str, date_time_str: str | None, steps: list[str]) -> str | None:
