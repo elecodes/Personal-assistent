@@ -387,6 +387,23 @@ Dictá por ejemplo: "Trabajo: preparar informe trimestral urgente para el vierne
     let activeDraftId = null;
     let showCompleted = true;
 
+    function saveTasksToLocalStorage() {
+      try {
+        localStorage.setItem('voice_tasks_list', JSON.stringify(tasksList));
+      } catch (e) {
+        console.error('Error guardando tareas:', e);
+      }
+    }
+
+    function loadTasksFromLocalStorage() {
+      try {
+        const saved = localStorage.getItem('voice_tasks_list');
+        if (saved) tasksList = JSON.parse(saved);
+      } catch (e) {
+        console.error('Error cargando tareas:', e);
+      }
+    }
+
     // Toast Alert Helper
     function showToast(message, type = 'info') {
       const container = document.getElementById('toastContainer');
@@ -557,6 +574,7 @@ Dictá por ejemplo: "Trabajo: preparar informe trimestral urgente para el vierne
       const task = findTaskById(id);
       if (task) {
         task[field] = value;
+        saveTasksToLocalStorage();
         if (field === 'date_time') {
           renderBoard();
         }
@@ -567,6 +585,7 @@ Dictá por ejemplo: "Trabajo: preparar informe trimestral urgente para el vierne
       const task = findTaskById(id);
       if (task && task.steps && task.steps[sIdx] !== undefined) {
         task.steps[sIdx] = val;
+        saveTasksToLocalStorage();
       }
     }
 
@@ -705,6 +724,8 @@ Dictá por ejemplo: "Trabajo: preparar informe trimestral urgente para el vierne
       document.getElementById('count-proximos').innerText = cProximos;
       document.getElementById('count-sinfecha').innerText = cSinFecha;
       document.getElementById('count-completed').innerText = cCompleted;
+
+      saveTasksToLocalStorage();
     }
 
     function createEditableCardHTML(task) {
@@ -878,7 +899,8 @@ Dictá por ejemplo: "Trabajo: preparar informe trimestral urgente para el vierne
       } catch (e) { showToast('Error generando link de Google Calendar: ' + e.message, 'error'); }
     }
 
-    // Initial board render on startup
+    // Initial board load & render on startup
+    loadTasksFromLocalStorage();
     renderBoard();
   </script>
 </body>
