@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Firebase Cloud Persistence**: Cloud Firestore NoSQL database and Cloud Storage audio persistence (`firebase_client.py`) under Firebase Free Tier.
 - **Amazon Polly Neural Text-to-Speech**: High-definition neural TTS integration (`polly_client.py` & `/api/polly/stream`) with Spanish neural voices (`Lupe`, `Mia`, `Lucia`).
 - **Notion Data Source & Calendar Sync**: Updated `notion_client.py` supporting `data_source_id` payloads, `multi_select` properties (`Categoría`, `Prioridad`), and automatic fallback handling for Notion Calendar Database Tables.
-- **Smart Voice Dictation & Anglicisms Parsing**: Enhanced `voice_parser.py` supporting tech anglicisms (`deploy`, `meeting`, `PR`, `pull request`, `commit`, `merge`, `push`, `sync`, `test`, `review`, `feedback`, `backup`, `issue`, `bug`, `feature`) and multi-line bullet point formatting (`•`).
+- **Smart Voice Dictation & Anglicisms Parsing**: Enhanced `voice_parser.py` supporting tech anglicisms (`deploy`, `meeting`, `PR`, `pull request`, `commit`, `merge`, `push`, `sync`, `test`, `review`, `feedback`, `backup`, `issue`, `bug`, `feature`) and multi-line bullet point formatting (`•`). Documented **Whisper Flow** dictation compatibility option in README.
 - **Architecture Documentation**: Added ADR 0002 under `docs/adr/0002-firebase-polly-notion-voice-enhancements.md`.
 
 ## [1.2.0] - 2026-09-26

@@ -9,7 +9,7 @@ Organizador visual de tareas por dictado de voz (100% Free Tier) que convierte n
 
 ## Características Principales
 
-* 🎙️ **Dictado Continuo por Voz & Anglicismos**: Transcripción en tiempo real en español reconociendo términos técnicos y anglicismos (`deploy`, `meeting`, `PR`, `commit`, `merge`, `push`, `test`, `review`, `feedback`, `backup`, `issue`, `bug`, `feature`).
+* 🎙️ **Dictado Continuo por Voz & Anglicismos**: Transcripción en tiempo real en español reconociendo términos técnicos y anglicismos (`deploy`, `meeting`, `PR`, `commit`, `merge`, `push`, `test`, `review`, `feedback`, `backup`, `issue`, `bug`, `feature`). Compatible con la Web Speech API nativa del navegador y con aplicaciones de dictado local avanzado como **Whisper Flow** para captura continua de alta precisión.
 * 🔊 **Amazon Polly Neural Text-to-Speech**: Síntesis de voz en alta definición utilizando el motor **Neural** de Amazon Polly (`Lupe`, `Mia`, `Lucia`) a través del endpoint `/api/polly/stream`.
 * ☁️ **Persistencia en la Nube con Firebase (Free Tier)**: Almacenamiento NoSQL de notas en **Cloud Firestore** y archivos de audio en **Cloud Storage** con la librería `firebase_client.py`.
 * 🧠 **Parser Inteligente de Lenguaje Natural**: Desglose automático de dictados corridos en listas estructuradas con saltos de línea y viñetas (`•`).
@@ -75,6 +75,14 @@ python3 -m uvicorn server:app --reload --port 8085
 ```
 
 Navegá en tu explorador a `http://localhost:8085`.
+
+---
+
+## Opciones de Dictado por Voz
+
+La aplicación soporta dos modalidades de captura por voz:
+1. **Web Speech API Nativa**: Incorporada en la aplicación web, funciona directo en el navegador haciendo clic en el icono del micrófono.
+2. **Whisper Flow**: Integración perfecta con herramientas de dictado basadas en OpenAI Whisper local/cloud como **Whisper Flow**, permitiendo dictar directamente en el área de texto de cualquier tarjeta con puntuación automática y máxima precisión.
 
 ---
 
