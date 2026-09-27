@@ -557,7 +557,9 @@ Dictá por ejemplo: "Trabajo: preparar informe trimestral urgente para el vierne
       const task = findTaskById(id);
       if (task) {
         task[field] = value;
-        renderBoard();
+        if (field === 'date_time') {
+          renderBoard();
+        }
       }
     }
 
