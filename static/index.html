@@ -513,7 +513,7 @@ Dictá por ejemplo: "Trabajo: preparar informe trimestral urgente para el vierne
         const newId = 'task-' + Date.now();
         const newTask = {
           id: newId,
-          title: 'Nueva Tarea / Idea',
+          title: '',
           category: 'Ideas',
           priority: 'Media',
           date_time: null,
@@ -755,6 +755,7 @@ Dictá por ejemplo: "Trabajo: preparar informe trimestral urgente para el vierne
         <!-- Note Text Body Space -->
         <div class="mb-3">
           <textarea class="card-note-textarea ${task.completed ? 'text-decoration-line-through text-muted' : ''}" placeholder="Escribí o dictá el texto completo de tu nota aquí..."
+                    onfocus="if (this.value === 'Nueva Tarea / Idea' || this.value === 'Nueva Idea') { this.value = ''; updateField('${task.id}', 'title', ''); }"
                     oninput="updateField('${task.id}', 'title', this.value)">${task.title}</textarea>
         </div>
         
