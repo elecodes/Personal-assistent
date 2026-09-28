@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-09-28
+
+### Added
+- **Mobile-First Responsive Interface**: Added mobile tab navigation control (`#mobileColumnTabs`) and touch-optimized layout for mobile viewports (< 768px).
+- **Progressive Web App (PWA) Support**: Added `static/manifest.json` and `/manifest.json` endpoint in `server.py` supporting home screen installation ("Add to Home Screen").
+- **Architecture Documentation**: Added ADR 0004 under [docs/adr/0004-mobile-first-pwa-architecture.md](file:///Users/elena/Developer/Personal%20Assistent/docs/adr/0004-mobile-first-pwa-architecture.md).
+
 ## [1.5.0] - 2026-09-28
 
 ### Added

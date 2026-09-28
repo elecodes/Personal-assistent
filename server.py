@@ -69,6 +69,13 @@ async def favicon():
     return Response(status_code=204)
 
 
+@app.get("/manifest.json", include_in_schema=False)
+async def manifest():
+    """Serve PWA web application manifest."""
+    with open("static/manifest.json", encoding="utf-8") as f:
+        return Response(content=f.read(), media_type="application/json")
+
+
 @app.post("/api/parse")
 async def parse_voice_dictation(payload: DictationPayload):
     """Parse raw Spanish dictation text into a structured task preview."""

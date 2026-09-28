@@ -18,6 +18,7 @@ Organizador visual de tareas por dictado de voz (100% Free Tier) que convierte n
 * 📑 **Estado de Completado & Filtro**: Marcado de tarjetas completadas que permanecen activas hasta su resolución y se archivan limpiamente del tablero.
 * 📓 **Guardado Silencioso en Obsidian**: Exportación de notas en Markdown con metadatos YAML frontmatter a tu carpeta local de Obsidian (`obsidian_vault/Substack`) en segundo plano sin desplegar la app de Obsidian.
 * ⚡ **Sincronización Manos Libres por Voz**: Detección inteligente de comandos como `añadir a Notion`, `add to Obsidian`, `enviar a Notion` o `exportar a Obsidian` en la frase dictada para sincronizar directamente sin hacer clic.
+* 📱 **Mobile-First & PWA Ready**: Interfaz táctil adaptable con pestañas de navegación por columna para teléfonos móviles y soporte para instalación directa en pantalla de inicio (**Add to Home Screen**) mediante `manifest.json`.
 * 💾 **Persistencia de Tablero Local (`localStorage`)**: Las tarjetas y listas editadas se conservan automáticamente entre sesiones y reinicios del navegador.
 
 ---

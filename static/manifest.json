@@ -1,0 +1,17 @@
+{
+  "name": "Voice Task Organizer",
+  "short_name": "VoiceTasks",
+  "description": "Organizador visual por voz con sincronización a Notion, Obsidian y Google Calendar",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/icons/mic-fill.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

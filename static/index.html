@@ -2,7 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="VoiceTasks">
   <title>Organizador Visual por Voz & Calendario</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -30,6 +35,38 @@
       font-family: var(--font-main);
       color: var(--text-dark);
       -webkit-font-smoothing: antialiased;
+      padding-bottom: 70px;
+    }
+
+    @media (max-width: 767.98px) {
+      body {
+        padding-bottom: 80px;
+      }
+      .hero-header {
+        padding: 1.25rem 0 1rem 0 !important;
+      }
+      .mic-btn {
+        width: 60px !important;
+        height: 60px !important;
+        font-size: 1.5rem !important;
+      }
+      .board-column-wrapper {
+        display: none;
+      }
+      .board-column-wrapper.active-mobile-tab {
+        display: block !important;
+      }
+      .card-note-textarea {
+        font-size: 16px !important; /* Prevents auto-zoom on iOS safari */
+      }
+      .action-btn-pill {
+        padding: 6px 10px !important;
+        font-size: 0.8rem !important;
+        min-height: 38px !important;
+      }
+      .step-input-field {
+        font-size: 16px !important;
+      }
     }
 
     .hero-header {
@@ -316,10 +353,18 @@ Dictá por ejemplo: "Trabajo: preparar informe trimestral urgente para el vierne
       </div>
     </div>
 
+    <!-- Mobile Column Tabs Nav (< 768px) -->
+    <ul class="nav nav-pills nav-fill mb-3 d-flex d-md-none bg-white p-1 rounded-3 border shadow-sm" id="mobileColumnTabs">
+      <li class="nav-item"><button class="nav-link active py-2 fw-bold text-truncate" id="tab-btn-hoy" onclick="selectMobileTab('hoy')">Hoy <span class="badge bg-primary rounded-pill" id="tab-count-hoy">0</span></button></li>
+      <li class="nav-item"><button class="nav-link py-2 fw-bold text-truncate" id="tab-btn-manana" onclick="selectMobileTab('manana')">Mañana <span class="badge bg-info text-white rounded-pill" id="tab-count-manana">0</span></button></li>
+      <li class="nav-item"><button class="nav-link py-2 fw-bold text-truncate" id="tab-btn-proximos" onclick="selectMobileTab('proximos')">Próximos <span class="badge bg-warning text-dark rounded-pill" id="tab-count-proximos">0</span></button></li>
+      <li class="nav-item"><button class="nav-link py-2 fw-bold text-truncate" id="tab-btn-sinfecha" onclick="selectMobileTab('sinfecha')">Backlog <span class="badge bg-secondary rounded-pill" id="tab-count-sinfecha">0</span></button></li>
+    </ul>
+
     <!-- 4 Day Board Columns -->
     <div class="row g-3 mb-5">
       <!-- Hoy Column -->
-      <div class="col-md-3">
+      <div class="col-md-3 board-column-wrapper active-mobile-tab" id="wrapper-col-hoy">
         <div class="board-column" id="col-hoy">
           <div class="board-column-header text-primary">
             <div class="d-flex align-items-center gap-2">
@@ -333,7 +378,7 @@ Dictá por ejemplo: "Trabajo: preparar informe trimestral urgente para el vierne
       </div>
 
       <!-- Mañana Column -->
-      <div class="col-md-3">
+      <div class="col-md-3 board-column-wrapper" id="wrapper-col-manana">
         <div class="board-column" id="col-manana">
           <div class="board-column-header text-info">
             <div class="d-flex align-items-center gap-2">
@@ -347,7 +392,7 @@ Dictá por ejemplo: "Trabajo: preparar informe trimestral urgente para el vierne
       </div>
 
       <!-- Próximos Días Column -->
-      <div class="col-md-3">
+      <div class="col-md-3 board-column-wrapper" id="wrapper-col-proximos">
         <div class="board-column" id="col-proximos">
           <div class="board-column-header text-warning">
             <div class="d-flex align-items-center gap-2">
@@ -361,7 +406,7 @@ Dictá por ejemplo: "Trabajo: preparar informe trimestral urgente para el vierne
       </div>
 
       <!-- Sin Fecha Column -->
-      <div class="col-md-3">
+      <div class="col-md-3 board-column-wrapper" id="wrapper-col-sinfecha">
         <div class="board-column" id="col-sinfecha">
           <div class="board-column-header text-secondary">
             <div class="d-flex align-items-center gap-2">
@@ -738,7 +783,21 @@ Dictá por ejemplo: "Trabajo: preparar informe trimestral urgente para el vierne
       document.getElementById('count-sinfecha').innerText = cSinFecha;
       document.getElementById('count-completed').innerText = cCompleted;
 
+      const tabHoy = document.getElementById('tab-count-hoy'); if (tabHoy) tabHoy.innerText = cHoy;
+      const tabManana = document.getElementById('tab-count-manana'); if (tabManana) tabManana.innerText = cManana;
+      const tabProximos = document.getElementById('tab-count-proximos'); if (tabProximos) tabProximos.innerText = cProximos;
+      const tabSinFecha = document.getElementById('tab-count-sinfecha'); if (tabSinFecha) tabSinFecha.innerText = cSinFecha;
+
       saveTasksToLocalStorage();
+    }
+
+    function selectMobileTab(tabKey) {
+      ['hoy', 'manana', 'proximos', 'sinfecha'].forEach(k => {
+        const wrapper = document.getElementById(`wrapper-col-${k}`);
+        const btn = document.getElementById(`tab-btn-${k}`);
+        if (wrapper) wrapper.classList.toggle('active-mobile-tab', k === tabKey);
+        if (btn) btn.classList.toggle('active', k === tabKey);
+      });
     }
 
     function createEditableCardHTML(task) {
