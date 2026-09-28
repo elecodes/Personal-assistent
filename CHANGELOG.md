@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-09-28
+
+### Added
+- **Architecture Documentation**: Added ADR 0003 under [docs/adr/0003-notion-sync-resilience-and-empty-title-handling.md](file:///Users/elena/Developer/Personal%20Assistent/docs/adr/0003-notion-sync-resilience-and-empty-title-handling.md).
+
+### Fixed
+- **Notion Sync Empty Title Fallback**: Added fallback string `"Nueva Idea"` in `server.py` for empty or whitespace titles to prevent invalid Notion task payloads.
+- **Backend Network Reliability**: Ensured full HTTPS connectivity to Notion API endpoints (`api.notion.com`) during task sync.
+
 ## [1.4.0] - 2026-09-27
 
 ### Added

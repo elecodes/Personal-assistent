@@ -88,7 +88,7 @@ async def create_task(payload: TaskPayload):
         raise HTTPException(status_code=500, detail=f"Configuración de Notion faltante: {err}")
 
     task = Task(
-        title=payload.title,
+        title=payload.title.strip() or "Nueva Idea",
         category=payload.category,
         date_time=payload.date_time,
         priority=payload.priority,
